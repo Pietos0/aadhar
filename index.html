@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aadhaar Verification</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Aadhaar Verification</h1>
+    <div class="form-group">
+      <label for="aadhaarNumber">Enter Aadhaar Number</label>
+      <input type="text" id="aadhaarNumber" placeholder="1234 5678 9012" maxlength="14">
+    </div>
+    
+    <div class="consent-checkbox">
+      <input type="checkbox" id="consentCheckbox">
+      <label for="consentCheckbox">I consent to share my Aadhaar details for verification purposes</label>
+    </div>
+    
+    <button id="verifyButton" onclick="initiateVerification()">Verify via DigiLocker</button>
+    
+    <div id="statusMessage" class="status"></div>
+  </div>
+
+  <script>
+    function initiateVerification() {
+      const aadhaarNumber = document.getElementById('aadhaarNumber').value.trim().replace(/\s+/g, '');
+      const consentGiven = document.getElementById('consentCheckbox').checked;
+      
+      if (!aadhaarNumber || aadhaarNumber.length !== 12 || !/^\d+$/.test(aadhaarNumber)) {
+        showStatus('Please enter a valid 12-digit Aadhaar number', 'error');
+        return;
+      }
+      
+      if (!consentGiven) {
+        showStatus('You must give consent to proceed', 'error');
+        return;
+      }
+      
+      showStatus('Redirecting to DigiLocker for verification...', 'success');
+      
+      // Call the Apps Script backend
+      fetch('https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'initiate_verification',
+          aadhaarNumber: aadhaarNumber
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.authUrl) {
+          window.location.href = data.authUrl;
+        } else {
+          showStatus('Error initiating verification', 'error');
+        }
+      })
+      .catch(error => {
+        showStatus('Error: ' + error.message, 'error');
+      });
+    }
+    
+    function showStatus(message, type) {
+      const statusDiv = document.getElementById('statusMessage');
+      statusDiv.textContent = message;
+      statusDiv.className = 'status ' + type;
+      statusDiv.style.display = 'block';
+    }
+  </script>
+</body>
+</html>
